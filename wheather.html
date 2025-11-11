@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather App</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #667eea, #764ba2);
+      color: white;
+      text-align: center;
+    }
+
+    header {
+      padding: 20px;
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+
+    .weather-container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    input {
+      padding: 10px;
+      width: 70%;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      background: #ffda79;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    button:hover {
+      background: #ffb347;
+    }
+
+    .weather-info {
+      margin-top: 20px;
+    }
+
+    .weather-info img {
+      width: 100px;
+    }
+
+    .temp {
+      font-size: 2.5rem;
+      font-weight: bold;
+    }
+
+    .details {
+      margin-top: 10px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>🌦️ Weather App</header>
+
+  <div class="weather-container">
+    <div>
+      <input type="text" id="cityInput" placeholder="Enter city name">
+      <button onclick="getWeatherByCity()">Search</button>
+    </div>
+    <div class="weather-info" id="weatherInfo">
+      <p>Fetching your location weather...</p>
+    </div>
+  </div>
+
+  <script>
+    // Ask user for their OpenWeatherMap API Key
+    const apiKey = prompt("Enter your OpenWeatherMap API Key:");
+
+    const weatherInfo = document.getElementById("weatherInfo");
+
+    // Fetch weather by coordinates
+    function getWeather(lat, lon) {
+      fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`)
+        .then(response => response.json())
+        .then(data => displayWeather(data))
+        .catch(() => {
+          weatherInfo.innerHTML = "<p>Unable to fetch weather data.</p>";
+        });
+    }
+
+    // Fetch weather by city name
+    function getWeatherByCity() {
+      const city = document.getElementById("cityInput").value;
+      if (!city) return;
+      fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`)
+        .then(response => response.json())
+        .then(data => displayWeather(data))
+        .catch(() => {
+          weatherInfo.innerHTML = "<p>City not found.</p>";
+        });
+    }
+
+    // Display weather details
+    function displayWeather(data) {
+      if (data.cod !== 200) {
+        weatherInfo.innerHTML = `<p>${data.message}</p>`;
+        return;
+      }
+
+      const { name } = data;
+      const { icon, description } = data.weather[0];
+      const { temp, humidity } = data.main;
+      const { speed } = data.wind;
+
+      weatherInfo.innerHTML = `
+        <h2>${name}</h2>
+        <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}">
+        <p class="temp">${temp}°C</p>
+        <p>${description.toUpperCase()}</p>
+        <div class="details">
+          <p>💧 Humidity: ${humidity}%</p>
+          <p>💨 Wind Speed: ${speed} m/s</p>
+        </div>
+      `;
+    }
+
+    // Get user location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const { latitude, longitude } = position.coords;
+          getWeather(latitude, longitude);
+        },
+        () => {
+          weatherInfo.innerHTML = "<p>Location access denied. Please search by city.</p>";
+        }
+      );
+    } else {
+      weatherInfo.innerHTML = "<p>Geolocation not supported.</p>";
+    }
+  </script>
+</body>
+</html>
